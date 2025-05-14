@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import runpod
-from runpod_endpoint.handler import handler
+from src.handler import handler
 
 # Start the serverless function
 if __name__ == "__main__":

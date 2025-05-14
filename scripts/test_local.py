@@ -5,7 +5,7 @@ before deploying it to RunPod.
 """
 
 import json
-from runpod_endpoint.handler import handler
+from src.handler import handler
 
 def test_image_url():
     """Test the handler with an image URL input."""

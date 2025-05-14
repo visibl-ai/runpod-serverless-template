@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "RunPod serverless endpoint for AI model deployment"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
-packages = [{include = "runpod_endpoint"}]
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

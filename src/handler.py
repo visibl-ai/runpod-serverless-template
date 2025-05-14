@@ -1,7 +1,7 @@
 import os
 import runpod
 import requests
-from runpod_endpoint.model import AIModel
+from src.model import AIModel
 
 # Initialize the model
 model = AIModel()

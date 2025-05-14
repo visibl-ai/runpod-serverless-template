@@ -10,7 +10,7 @@ This template provides a starting point for creating AI model serverless endpoin
 ├── .dockerignore              # Specifies files to exclude from Docker builds
 ├── handler.py                 # Main entry point for the serverless function
 ├── pyproject.toml             # Poetry configuration for dependency management
-├── runpod_endpoint/           # Python package directory
+├── src/                       # Python package directory
 │   ├── __init__.py            # Package initialization
 │   ├── handler.py             # Implementation of the handler function
 │   └── model.py               # AI model implementation
