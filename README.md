@@ -7,12 +7,19 @@ This template provides a starting point for creating AI model serverless endpoin
 ```
 .
 ├── Dockerfile                 # Defines the container that will run your code
+├── .dockerignore              # Specifies files to exclude from Docker builds
 ├── handler.py                 # Main entry point for the serverless function
 ├── pyproject.toml             # Poetry configuration for dependency management
 ├── runpod_endpoint/           # Python package directory
 │   ├── __init__.py            # Package initialization
 │   ├── handler.py             # Implementation of the handler function
 │   └── model.py               # AI model implementation
+├── scripts/                   # Test scripts directory (excluded from Docker build)
+│   ├── test_local.py          # Script for local testing (before deployment)
+│   ├── test_sync_endpoint.py  # Script for testing deployed endpoint (synchronous)
+│   ├── test_async_endpoint.py # Script for testing deployed endpoint (asynchronous)
+│   └── input_examples.json    # Example JSON input for testing
+├── config.env.example         # Example environment configuration file for testing
 └── README.md                  # This file
 ```
 
@@ -28,8 +35,8 @@ This template provides a starting point for creating AI model serverless endpoin
    - Run `poetry add package-name` to add new dependencies
 
 3. **Test Locally** (optional):
-   - Install dependencies: `poetry install`
-   - Run the test script: `poetry run python test_local.py`
+   - Install dependencies including development tools: `poetry install`
+   - Run the test script: `poetry run python scripts/test_local.py`
 
 4. **Deploy**:
    - Choose either GitHub-based or Docker-based deployment (see deployment options below)
@@ -39,13 +46,25 @@ This template provides a starting point for creating AI model serverless endpoin
 
 This template uses [Poetry](https://python-poetry.org/) for dependency management instead of requirements.txt. Poetry makes it easier to manage dependencies with a cleaner, more predictable build process.
 
+### Dependency Management
+
+The project separates runtime dependencies from development dependencies:
+
+- **Runtime dependencies**: Required packages for the endpoint to function in production
+- **Development dependencies**: Tools only needed for local development and testing
+
+This separation ensures that Docker builds are optimized and don't include unnecessary packages.
+
 ### Key Poetry Commands
 
 ```bash
-# Install dependencies
+# Install all dependencies (including dev)
 poetry install
 
-# Add a new dependency
+# Install only runtime dependencies (like in Docker)
+poetry install --without dev
+
+# Add a runtime dependency
 poetry add package-name
 
 # Add a development dependency
@@ -54,9 +73,52 @@ poetry add --group dev package-name
 # Update dependencies
 poetry update
 
-# Run a script
-poetry run python test_local.py
+# Run a script with Poetry environment
+poetry run python scripts/test_local.py
 ```
+
+## Environment Setup for Testing
+
+The test scripts support using environment variables for your RunPod API credentials and test inputs. This makes it easier to run tests without typing the same parameters repeatedly.
+
+### Setting Up Environment Variables
+
+1. **Create a `.env` file** by copying the example:
+   ```bash
+   cp config.env.example .env
+   ```
+
+2. **Edit the `.env` file** with your actual values:
+   ```
+   RUNPOD_API_KEY=your_api_key_here
+   RUNPOD_ENDPOINT_ID=your_endpoint_id_here
+   DEFAULT_TEST_IMAGE_URL=https://example.com/your_test_image.jpg
+   DEFAULT_TEST_TEXT="Your test prompt here"
+   ```
+
+3. **Run tests without specifying credentials**:
+   ```bash
+   # The API key and endpoint ID are now loaded from .env
+   python scripts/test_sync_endpoint.py
+   ```
+
+### Environment Variables Used
+
+| Variable | Description |
+|----------|-------------|
+| `RUNPOD_API_KEY` | Your RunPod API key |
+| `RUNPOD_ENDPOINT_ID` | ID of your serverless endpoint |
+| `DEFAULT_TEST_TEXT` | Default text input for testing |
+| `DEFAULT_TEST_IMAGE_URL` | Default image URL for testing |
+
+## Docker Optimization
+
+The template includes a `.dockerignore` file that excludes development and testing files from the Docker build context. This ensures:
+
+- Smaller Docker images
+- Faster build times
+- Enhanced security by excluding sensitive local configs
+- Only production-necessary code is included in the container
 
 ## API Format
 
@@ -110,6 +172,44 @@ The template supports asynchronous processing by providing a callback URL in you
 - Both successful results and errors are sent to the callback URL
 
 This is particularly useful for long-running inference tasks where you don't want to keep an HTTP connection open.
+
+## Testing Your Endpoint
+
+This template includes scripts to help you test your endpoint:
+
+### 1. Local Testing (Before Deployment)
+
+```bash
+# Test locally before deployment
+poetry run python scripts/test_local.py
+```
+
+### 2. Testing Deployed Endpoint (Synchronous)
+
+```bash
+# Test synchronous requests to the deployed endpoint (using environment variables)
+python scripts/test_sync_endpoint.py
+
+# Or with explicit parameters
+python scripts/test_sync_endpoint.py --endpoint-id YOUR_ENDPOINT_ID --api-key YOUR_API_KEY --text "Your test text"
+
+# Or with an image URL
+python scripts/test_sync_endpoint.py --image-url "https://example.com/image.jpg"
+
+# Or with a JSON file for complex inputs
+python scripts/test_sync_endpoint.py --json-input scripts/input_examples.json
+```
+
+### 3. Testing Deployed Endpoint (Asynchronous with Callbacks)
+
+For async testing with callbacks, you'll need a publicly accessible URL that can receive the results:
+
+```bash
+# Use a service like webhook.site or RequestBin to create a temporary URL for testing
+
+# Test asynchronous requests with callbacks
+python scripts/test_async_endpoint.py --callback-url "YOUR_WEBHOOK_URL" --text "Your test text"
+```
 
 ## Deployment to RunPod
 

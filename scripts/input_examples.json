@@ -1,0 +1,8 @@
+{
+  "text": "This is a test input for the text-based model.",
+  "additional_params": {
+    "parameter1": "value1",
+    "parameter2": 42,
+    "parameter3": true
+  }
+} 

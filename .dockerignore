@@ -1,0 +1,41 @@
+# Development and testing files
+.git/
+.github/
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+.dockerignore
+docker-compose*.yml
+
+# Scripts and test files
+scripts/
+tests/
+test_*.py
+*.test.py
+
+# Development configuration
+.env
+.env.*
+config.env.example
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Local development files
+*.log
+*.sqlite
+*.db
+venv/
+env/
+ENV/ 
