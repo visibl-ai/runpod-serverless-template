@@ -5,7 +5,7 @@ before deploying it to RunPod.
 """
 
 import json
-from handler import handler
+from runpod_endpoint.handler import handler
 
 def test_image_url():
     """Test the handler with an image URL input."""
@@ -53,6 +53,25 @@ def test_empty_input():
     
     print(f"Output: {json.dumps(result, indent=2)}")
 
+def test_with_callback():
+    """Test the handler with a callback URL."""
+    test_event = {
+        "input": {
+            "text": "This is a test with callback URL."
+        },
+        "callback_url": "https://example.com/callback",
+        "id": "test-job-123"
+    }
+    
+    print("\n==== Testing with callback URL ====")
+    print(f"Input: {json.dumps(test_event, indent=2)}")
+    print("NOTE: The callback URL won't actually be called in local testing.")
+    
+    # Call the handler
+    result = handler(test_event)
+    
+    print(f"Output: {json.dumps(result, indent=2)}")
+
 if __name__ == "__main__":
     print("Starting local test of RunPod serverless handler...")
     
@@ -60,5 +79,6 @@ if __name__ == "__main__":
     test_image_url()
     test_text()
     test_empty_input()
+    test_with_callback()
     
     print("\nLocal testing completed!") 
