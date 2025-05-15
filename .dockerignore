@@ -21,6 +21,10 @@ tests/
 test_*.py
 *.test.py
 
+# Example files (but allow base examples directory)
+examples/test_*.py
+examples/*.test.py
+
 # Development configuration
 .env
 .env.*
@@ -39,3 +43,6 @@ docs/
 venv/
 env/
 ENV/
+.venv/
+.poetry-cache/
+poetry.lock

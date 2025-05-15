@@ -18,11 +18,13 @@ COPY pyproject.toml poetry.lock* README.md ./
 # Configure poetry to not use a virtual environment
 RUN poetry config virtualenvs.create false
 
-# Install dependencies (without development dependencies)
+# Install runtime dependencies (without development dependencies)
 RUN poetry install --no-interaction --without dev --no-root
 
-# Copy the rest of the application
-COPY . .
+# Copy the template package and application files
+COPY runpod_serverless_template runpod_serverless_template/
+COPY examples examples/
+COPY handler.py ./
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

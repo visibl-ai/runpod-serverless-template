@@ -24,6 +24,9 @@ wheels/
 .installed.cfg
 *.egg
 
+# Poetry
+.poetry-cache/
+
 # PyInstaller
 *.manifest
 *.spec
@@ -50,6 +53,7 @@ coverage.xml
 venv/
 env/
 ENV/
+.venv/
 
 # IDE specific files
 .idea/

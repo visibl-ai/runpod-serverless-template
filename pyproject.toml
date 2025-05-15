@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "runpod-serverless-endpoint"
+name = "runpod-serverless-template"
 version = "0.1.0"
-description = "RunPod serverless endpoint for AI model deployment"
+description = "Template package for RunPod serverless endpoint deployment"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
-packages = [{include = "src"}]
+packages = [{include = "runpod_serverless_template"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
