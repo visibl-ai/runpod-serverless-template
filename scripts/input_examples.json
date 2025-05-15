@@ -4,5 +4,6 @@
     "parameter1": "value1",
     "parameter2": 42,
     "parameter3": true
-  }
-} 
+  },
+  "gcs_signed_url": "https://storage.googleapis.com/model-testing-results/20250515-01.json?x-goog-signature=0d6799793489893c2b8a834dfd6e191c41bc17806bdaeba6b4d99c4015fb10159864a2919e267daa738bcaf12bedb8faafa23a7416d24043c791939d2503ada0e5a0171b96e687bd23b95418e73d64766fe0de867f0e7ab1978e7df3d62422888697f72105f44f409e505a8592a2322f9169225b95c9b03d73dbcb5b42511cb5bbdd050e625982b43f890bfcd3d96710fe29da57b192477db5bb470c9b84a991bff9ff279fbf811d394cbf72d058c864f373ea83ff4effc2269b7baf1fdfa3e9f15e90ba276d7439d9b81799febe508ccbc299445be64d77d519427bbd3f23bfff395b81bd1c13ba5e19d272a33cb1e0bbb1706c96c1784f3f2c9252295313db&x-goog-algorithm=GOOG4-RSA-SHA256&x-goog-credential=visibl-rtdb-dev%40appspot.gserviceaccount.com%2F20250515%2Fus%2Fstorage%2Fgoog4_request&x-goog-date=20250515T010830Z&x-goog-expires=900&x-goog-signedheaders=host"
+}

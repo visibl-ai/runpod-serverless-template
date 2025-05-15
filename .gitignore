@@ -80,4 +80,4 @@ docker-compose.override.yml
 *.hdf5
 *.pkl
 *.joblib
-*.model 
+*.model

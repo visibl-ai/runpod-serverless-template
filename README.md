@@ -26,7 +26,7 @@ This template provides a starting point for creating AI model serverless endpoin
 
 ## Getting Started
 
-1. **Customize the Model**: 
+1. **Customize the Model**:
    - Update the `src/model.py` file with your AI model implementation
    - Replace the placeholder code in the `AIModel` class with your actual model
 
@@ -344,4 +344,4 @@ print(response.json())
 - [RunPod Serverless Documentation](https://docs.runpod.io/docs/serverless-overview)
 - [RunPod Python SDK](https://github.com/runpod/runpod-python)
 - [RunPod GitHub Integration](https://docs.runpod.io/docs/github-integration)
-- [Poetry Documentation](https://python-poetry.org/docs/) 
+- [Poetry Documentation](https://python-poetry.org/docs/)

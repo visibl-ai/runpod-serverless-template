@@ -38,4 +38,4 @@ docs/
 *.db
 venv/
 env/
-ENV/ 
+ENV/

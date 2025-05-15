@@ -28,4 +28,4 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 
 # Start the handler
-CMD ["python", "-u", "handler.py"] 
+CMD ["python", "-u", "handler.py"]
