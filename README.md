@@ -16,6 +16,7 @@ This template provides a starting point for creating AI model serverless endpoin
 │   └── model.py               # AI model implementation
 ├── scripts/                   # Test scripts directory (excluded from Docker build)
 │   ├── test_local.py          # Script for local testing (before deployment)
+│   ├── test_with_gcs.py       # Script for testing with GCS signed URLs
 │   ├── test_sync_endpoint.py  # Script for testing deployed endpoint (synchronous)
 │   ├── test_async_endpoint.py # Script for testing deployed endpoint (asynchronous)
 │   └── input_examples.json    # Example JSON input for testing
@@ -26,7 +27,7 @@ This template provides a starting point for creating AI model serverless endpoin
 ## Getting Started
 
 1. **Customize the Model**: 
-   - Update the `runpod_endpoint/model.py` file with your AI model implementation
+   - Update the `src/model.py` file with your AI model implementation
    - Replace the placeholder code in the `AIModel` class with your actual model
 
 2. **Update Dependencies**:
@@ -132,13 +133,14 @@ The template includes a `.dockerignore` file that excludes development and testi
     // or
     "text": "Example text input"
   },
-  "callback_url": "https://your-server.com/webhook" // Optional: URL to receive results when processing completes
+  "callback_url": "https://your-server.com/webhook", // Optional: URL to receive results when processing completes
+  "gcs_signed_url": "https://storage.googleapis.com/your-bucket/results.json?X-Goog-Signature=..." // Optional: GCS URL to upload results
 }
 ```
 
 ### Output Format
 
-When not using a callback URL:
+When not using a callback URL or signed URL:
 ```json
 {
   "status": "success",
@@ -163,15 +165,40 @@ When using a callback URL, the response will be posted to your callback URL:
 }
 ```
 
-## Callback URL Functionality
+When using a GCS signed URL, the results will be uploaded to the provided URL, and the response will include information about the upload:
+```json
+{
+  "status": "success",
+  "output": {
+    "prediction": "result",
+    "confidence": 0.95,
+    "processing_time": 0.5
+  },
+  "gcs_upload": "success"
+}
+```
 
-The template supports asynchronous processing by providing a callback URL in your request. When the model finishes processing, the results will be sent to the specified URL as a POST request with the following characteristics:
+## Result Delivery Options
 
-- The request is made with a Content-Type of `application/json`
-- The body includes the output result, status, and job ID
+The template provides three ways to receive results from your endpoint:
+
+### 1. Synchronous (Direct Response)
+
+The simplest approach is to wait for the response directly in the same HTTP request. This works well for quick inference tasks but can time out for longer-running tasks.
+
+### 2. Asynchronous (Callback URL)
+
+For longer-running tasks, you can provide a `callback_url` in your request. When the model finishes processing, the results will be sent to the specified URL as a POST request with:
+- Content-Type: `application/json`
+- Body includes the output result, status, and job ID
 - Both successful results and errors are sent to the callback URL
 
-This is particularly useful for long-running inference tasks where you don't want to keep an HTTP connection open.
+### 3. Google Cloud Storage (Signed URL)
+
+For storing large results or when you need more flexibility in result handling, you can provide a `gcs_signed_url` parameter. The endpoint will:
+- Upload results directly to the provided GCS bucket location
+- Use PUT request with Content-Type: `application/json`
+- Include upload status information in the response
 
 ## Testing Your Endpoint
 
@@ -182,6 +209,9 @@ This template includes scripts to help you test your endpoint:
 ```bash
 # Test locally before deployment
 poetry run python scripts/test_local.py
+
+# Test with a specific signed URL
+poetry run python scripts/test_local.py --signed-url "https://storage.googleapis.com/your-bucket/object?signature=..."
 ```
 
 ### 2. Testing Deployed Endpoint (Synchronous)
@@ -200,7 +230,14 @@ python scripts/test_sync_endpoint.py --image-url "https://example.com/image.jpg"
 python scripts/test_sync_endpoint.py --json-input scripts/input_examples.json
 ```
 
-### 3. Testing Deployed Endpoint (Asynchronous with Callbacks)
+### 3. Testing Deployed Endpoint with GCS Signed URL
+
+```bash
+# Test with a GCS signed URL
+python scripts/test_with_gcs.py --endpoint-id YOUR_ENDPOINT_ID --api-key YOUR_API_KEY --signed-url "YOUR_SIGNED_URL" --text "Your test text"
+```
+
+### 4. Testing Deployed Endpoint (Asynchronous with Callbacks)
 
 For async testing with callbacks, you'll need a publicly accessible URL that can receive the results:
 
