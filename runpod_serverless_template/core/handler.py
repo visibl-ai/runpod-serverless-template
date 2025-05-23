@@ -42,6 +42,9 @@ class BaseHandler:
             callback_url = event.get("callback_url")
             gcs_signed_url = event.get("gcs_signed_url")
 
+            print("BaseHandler __call__", event)
+            print("BaseHandler __call__", input_data, callback_url, gcs_signed_url)
+
             # Validate input data
             if not input_data:
                 return {"error": "No input data provided"}
@@ -58,6 +61,7 @@ class BaseHandler:
 
             # If a GCS signed URL is provided, upload the result
             if gcs_signed_url:
+                print("BaseHandler __call__ uploading to GCS", gcs_signed_url, payload)
                 upload_success = upload_to_signed_url(gcs_signed_url, payload)
 
                 if upload_success:
@@ -69,6 +73,7 @@ class BaseHandler:
 
             # If a callback URL is provided, send the result
             if callback_url:
+                print("BaseHandler __call__ sending callback", callback_url, payload)
                 return self._handle_callback(callback_url, payload)
 
             # If no callback URL, return the result directly
@@ -89,6 +94,8 @@ class BaseHandler:
             dict: Response indicating the result was sent
         """
         try:
+            print("BaseHandler _handle_callback", callback_url, payload)
+
             # Send the result to the callback URL
             response = requests.post(
                 callback_url,
