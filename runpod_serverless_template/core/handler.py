@@ -39,8 +39,8 @@ class BaseHandler:
         try:
             # Extract input data
             input_data = event.get("input", {})
-            callback_url = event.get("callback_url")
-            gcs_signed_url = event.get("gcs_signed_url")
+            callback_url = input_data.get("callback_url")
+            gcs_signed_url = input_data.get("gcs_signed_url")
 
             print("BaseHandler __call__", event)
             print("BaseHandler __call__", input_data, callback_url, gcs_signed_url)
