@@ -2,6 +2,8 @@
 Base handler for RunPod serverless endpoints.
 """
 
+import os
+
 import requests
 
 from runpod_serverless_template.utils.gcs import upload_to_signed_url
@@ -25,6 +27,9 @@ class BaseHandler:
             model_instance: An instance of a class that implements the BaseModel interface
         """
         self.model = model_instance
+        self.callback_token = os.environ.get(
+            "RUNPOD_CALLBACK_TOKEN", os.environ.get("CALLBACK_TOKEN")
+        )
 
     def __call__(self, event):
         """
@@ -96,11 +101,16 @@ class BaseHandler:
         try:
             print("BaseHandler _handle_callback", callback_url, payload)
 
+            # Prepare headers with callback token if available
+            headers = {"Content-Type": "application/json"}
+            if self.callback_token:
+                headers["Authorization"] = f"Bearer {self.callback_token}"
+
             # Send the result to the callback URL
             response = requests.post(
                 callback_url,
                 json=payload,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
             )
 
             # Check if the callback was successful
@@ -154,11 +164,16 @@ class BaseHandler:
         # If a callback URL is provided, send the error
         if event.get("callback_url"):
             try:
+                # Prepare headers with callback token if available
+                headers = {"Content-Type": "application/json"}
+                if self.callback_token:
+                    headers["Authorization"] = f"Bearer {self.callback_token}"
+
                 # Send the error to the callback URL
                 requests.post(
                     event.get("callback_url"),
                     json=error_payload,
-                    headers={"Content-Type": "application/json"},
+                    headers=headers,
                 )
             except Exception as callback_error:
                 print(f"Error sending error to callback URL: {str(callback_error)}")
