@@ -2,6 +2,7 @@
 Base handler for RunPod serverless endpoints.
 """
 
+import base64
 import os
 
 import requests
@@ -67,7 +68,18 @@ class BaseHandler:
             # If a GCS signed URL is provided, upload the result
             if gcs_signed_url:
                 print("BaseHandler __call__ uploading to GCS", gcs_signed_url, payload)
-                upload_success = upload_to_signed_url(gcs_signed_url, payload)
+                output_data = result.get("output", {})
+                if isinstance(output_data, dict):
+                    image_data = output_data.get("image", output_data.get("output", ""))
+                else:
+                    image_data = output_data
+
+                if isinstance(image_data, str) and image_data.startswith("data:image"):
+                    # Extract base64 image data
+                    image_bytes = base64.b64decode(image_data.split(",")[1])
+                    upload_success = upload_to_signed_url(gcs_signed_url, image_bytes)
+                else:
+                    upload_success = upload_to_signed_url(gcs_signed_url, payload)
 
                 if upload_success:
                     # Add information about the upload to the response
