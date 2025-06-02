@@ -347,30 +347,69 @@ class BaseModel(ABC):
         Returns:
             dict: The processed results, including upload status if applicable
         """
-        # Default implementation - format the output
-        if isinstance(output, dict):
-            result = output
-        else:
-            result = {"prediction": output}
+        # Handle direct image outputs
+        if self._is_image_output(output):
+            if gcs_signed_url:
+                try:
+                    upload_success = upload_image_to_signed_url(gcs_signed_url, output)
+                    object_name = gcs_signed_url.split("/")[-1].split("?")[0]
+                    return {
+                        "prediction": object_name,
+                        "gcs_upload": "success" if upload_success else "failed",
+                    }
+                except Exception as e:
+                    print(f"Error uploading to GCS: {str(e)}")
+                    return {"prediction": None, "gcs_upload": "failed", "error": str(e)}
 
-        # Handle GCS upload if signed URL is provided
-        if gcs_signed_url:
-            try:
-                # Check if output contains image data that should be uploaded as image
-                if "prediction" in result and self._is_image_output(
-                    result["prediction"]
-                ):
+            # Base64 encode the image if no GCS URL
+            import base64
+            import io
+
+            # Convert numpy array to PIL Image if needed
+            if isinstance(output, np.ndarray):
+                from PIL import Image
+
+                output = Image.fromarray(output)
+            # Convert PIL Image to base64
+            buffered = io.BytesIO()
+            output.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            return {"prediction": img_str, "encoding": "base64", "format": "png"}
+
+        # Handle dictionary outputs
+        if isinstance(output, dict):
+            result = output.copy()  # Make a copy to avoid modifying the original
+
+            # Handle image prediction in dictionary
+            if (
+                gcs_signed_url
+                and "prediction" in result
+                and self._is_image_output(result["prediction"])
+            ):
+                try:
                     upload_success = upload_image_to_signed_url(
                         gcs_signed_url, result["prediction"]
                     )
-                elif self._is_image_output(output):
-                    upload_success = upload_image_to_signed_url(gcs_signed_url, output)
-                else:
+                    object_name = gcs_signed_url.split("/")[-1].split("?")[0]
+                    result["prediction"] = object_name
+                    result["gcs_upload"] = "success" if upload_success else "failed"
+                    return result
+                except Exception as e:
+                    print(f"Error uploading to GCS: {str(e)}")
+                    result["gcs_upload"] = "failed"
+                    result["error"] = str(e)
+                    return result
+
+            # Handle regular dictionary upload
+            if gcs_signed_url:
+                try:
                     upload_success = upload_to_signed_url(gcs_signed_url, result)
+                    result["gcs_upload"] = "success" if upload_success else "failed"
+                except Exception as e:
+                    print(f"Error uploading to GCS: {str(e)}")
+                    result["gcs_upload"] = "failed"
+                    result["error"] = str(e)
+            return result
 
-                result["gcs_upload"] = "success" if upload_success else "failed"
-            except Exception as e:
-                print(f"Error uploading to GCS: {str(e)}")
-                result["gcs_upload"] = "failed"
-
-        return result
+        # Handle all other output types
+        return {"prediction": output}
