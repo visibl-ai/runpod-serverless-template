@@ -288,52 +288,95 @@ class BaseModel(ABC):
 
     def _predict_batch(self, batch_items):
         """
-        Run prediction for a batch of inputs.
+        Run prediction for a batch of inputs in parallel.
 
         Args:
             batch_items (list): List of input items to process
 
         Returns:
-            dict: Batch prediction results
+            dict: Batch prediction results with metadata
         """
+        import os
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from math import ceil
+
         batch_start_time = time.time()
+
+        # Get max parallel items from env var, default to 2
+        max_parallel = int(os.getenv("BATCH_SIZE", "2"))
+
+        # Process items in parallel batches
         results = []
+        total_items = len(batch_items)
 
-        for i, item in enumerate(batch_items):
-            # Make a copy to avoid modifying the original
-            item_copy = item.copy() if isinstance(item, dict) else item
+        # Process in batches to control memory usage
+        with ThreadPoolExecutor(max_workers=max_parallel) as executor:
+            # Submit all tasks
+            future_to_idx = {
+                executor.submit(self._process_batch_item, item, idx): idx
+                for idx, item in enumerate(batch_items)
+            }
 
-            # Extract GCS signed URL if present in this batch item
-            gcs_signed_url = (
-                item_copy.pop("gcs_signed_url", None)
-                if isinstance(item_copy, dict)
-                else None
-            )
+            # Collect results as they complete
+            for future in as_completed(future_to_idx):
+                idx = future_to_idx[future]
+                try:
+                    item_result = future.result()
+                    # Add batch index if not already present
+                    if isinstance(item_result, dict):
+                        item_result["batch_index"] = idx
+                    else:
+                        item_result = {"prediction": item_result, "batch_index": idx}
+                    results.append(item_result)
+                except Exception as e:
+                    # Handle any unexpected errors in parallel processing
+                    error_result = self.handle_error(
+                        e, "batch_processing", batch_items[idx]
+                    )
+                    error_result["batch_index"] = idx
+                    results.append(error_result)
 
-            # Run prediction for this item
-            item_result = self._predict_single(item_copy, gcs_signed_url=gcs_signed_url)
+        # Sort results by batch index to maintain order
+        results.sort(key=lambda x: x["batch_index"])
 
-            # Add item index for tracking
-            if isinstance(item_result, dict):
-                item_result["batch_index"] = i
-            else:
-                item_result = {"prediction": item_result, "batch_index": i}
-
-            results.append(item_result)
-
-        # Calculate total batch processing time
+        # Calculate total processing time
         total_processing_time = time.time() - batch_start_time
 
         return {
             "status": "success",
             "batch_results": results,
-            "batch_size": len(batch_items),
+            "batch_size": total_items,
             "total_processing_time": total_processing_time,
             "successful_items": len(
                 [r for r in results if r.get("status") == "success"]
             ),
             "failed_items": len([r for r in results if r.get("status") == "error"]),
+            "parallel_workers": max_parallel,
         }
+
+    def _process_batch_item(self, item, idx):
+        """
+        Process a single item from a batch.
+
+        Args:
+            item: The input item to process
+            idx (int): The batch index of this item
+
+        Returns:
+            dict: The processed result for this item
+        """
+        # Make a copy to avoid modifying the original
+        item_copy = item.copy() if isinstance(item, dict) else item
+
+        # Extract GCS signed URL if present in this batch item
+        gcs_signed_url = (
+            item_copy.pop("gcs_signed_url", None)
+            if isinstance(item_copy, dict)
+            else None
+        )
+
+        # Run prediction for this item
+        return self._predict_single(item_copy, gcs_signed_url=gcs_signed_url)
 
     def postprocess(self, output, gcs_signed_url=None):
         """
